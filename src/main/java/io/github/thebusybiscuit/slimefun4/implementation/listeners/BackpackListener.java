@@ -50,6 +50,8 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.backpacks.Slimefu
 public class BackpackListener implements Listener {
 
     private final Map<UUID, ItemStack> backpacks = new HashMap<>();
+    private final Map<Player, Long> cooldowns = new HashMap<>();
+    private static final long MIN_DELAY = 500;
 
     public void register(@Nonnull Slimefun plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -146,6 +148,19 @@ public class BackpackListener implements Listener {
 
     @ParametersAreNonnullByDefault
     private void openBackpack(Player p, ItemStack item, PlayerProfile profile, int size) {
+        if (p.getInventory().getItemInOffHand().getType() != Material.AIR) {
+            return;
+        }
+
+        if (cooldowns.containsKey(p)) {
+            if (cooldowns.get(p) + MIN_DELAY > System.currentTimeMillis()) {
+                Slimefun.getLocalization().sendMessage(p, "backpack.already-open", true);
+                return;
+            }
+        }
+
+        cooldowns.put(p, System.currentTimeMillis());
+
         List<String> lore = item.getItemMeta().getLore();
 
         for (int line = 0; line < lore.size(); line++) {
